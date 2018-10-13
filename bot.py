@@ -41,12 +41,6 @@ class Scrim_bot:
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Unknown timezone, try to use this [LINK](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for reference."))
 
-    async def wrong_arguments_error(self, message):
-        '''
-            Just so I don't have to put the same message everywhere 
-        '''
-        await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, user `!scrimsadd help` for help"))          
-
     async def add_scrim(self, message):
         '''
            Command: !scrimsadd [dd/mm] [hh:mm] [hh:mm] [enemy-team-name]
@@ -81,5 +75,5 @@ class Scrim_bot:
             # save the entry into database
             print("kek")
         else:
-            await self.wrong_arguments_error(message)
+            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, user `!scrimsadd help` for help"))          
             return

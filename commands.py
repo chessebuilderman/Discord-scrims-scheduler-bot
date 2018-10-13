@@ -25,17 +25,19 @@ async def has_owner_role(message):
                     .first()
                 )
                 session.expunge_all()
+        if server_data is not None:
+            sd = server_data.as_dict()
         if server_data is None:
             # No data about this server has been found
             await disc.send_message(message.channel, embed=embeds.Error("Error executing command", "This server is not setup."))
             return False
-        elif server_data["timezone"] is None or server_data["owner_role"] is None:
+        elif sd["timezone"] is None or sd["owner_role"] is None:
             # timezone or owner role hasn't been set up
             await disc.send_message(message.channel, embed=embeds.Error("Error executing command", "Server timezone or owner_role are missing."))
             return False
-        elif server_data["owner_role"] not in [role.id for role in message.author.roles]:
+        elif sd["owner_role"] not in [role.id for role in message.author.roles]:
             # Server has data, but sender of the message doesn't have owner role
-            await disc.send_message(message.channel, embed=emdeds.Error("Error executing command", "Insufficient permissions."))
+            await disc.send_message(message.channel, embed=embeds.Error("Error executing command", "Insufficient permissions."))
             return False
         else:
             # everything is cool
@@ -64,8 +66,7 @@ class AddScrim(Command):
     help_string = "lipsum" # TODO
 
     async def action(self, bot, message):
-        has_permissions = await has_owner_role(message)
-        if has_permissions is True:
+        if await has_owner_role(message):
             await bot.add_scrim(message)
 
 class StopCommand(Command):
