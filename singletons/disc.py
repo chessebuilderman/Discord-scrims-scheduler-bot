@@ -20,3 +20,12 @@ class Discord_bot:
 
     def get_client(self):
         return self.client
+
+    async def send_message(self, channel, content="", embed=None):
+        '''
+            Just a wrapper for sending messages, so I don't have to deal with exceptions inside code
+        '''
+        try:
+            await self.client.send_message(channel, content=content, embed=embed)
+        except:
+            print("ERROR: cmonBruh")

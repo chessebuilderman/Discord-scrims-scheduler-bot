@@ -11,7 +11,11 @@ client = disc.get_client()
 
 bot = bot.Scrim_bot()
 
-bot.commands.append(commands.StopCommand())
+bot.commands.append(commands.Setup())
+bot.commands.append(commands.AddScrim())
+
+if cfg.bot["version"] == "dev":
+    bot.commands.append(commands.StopCommand())
 
 db = Database()
 

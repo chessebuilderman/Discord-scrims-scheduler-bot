@@ -7,21 +7,25 @@ class Servers(Base):
     __tablename__ = "servers"
 
     discord_server_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=False)
-    discord_server_name = Column(String)
-    timezone = Column(String)
+    discord_server_name = Column(String, nullable=False)
+    timezone = Column(String, nullable=False)
  
-    mention_role = Column(BigInteger)
+    mention_role = Column(BigInteger, nullable=False)
     owner_role = Column(BigInteger, nullable=False)
     
-    channel_id_schedule = Column(BigInteger)
-    channel_id_reminder = Column(BigInteger)
-    message_id_schedule = Column(BigInteger)
+    channel_id_schedule = Column(BigInteger, nullable=False)
+    channel_id_reminder = Column(BigInteger, nullable=False)
+    message_id_schedule = Column(BigInteger, nullable=True)
 
 
-    def __init__(self, owner_role, discord_server_id, discord_server_name):
-        self.owner_role = owner_role
+    def __init__(self, discord_server_id, discord_server_name, timezone, owner_role, mention_role, channel_id_schedule, channel_id_reminder):        
         self.discord_server_id = discord_server_id
         self.discord_server_name = discord_server_name
+        self.timezone = timezone
+        self.owner_role = owner_role
+        self.mention_role = mention_role
+        self.channel_id_reminder = channel_id_reminder
+        self.channel_id_schedule = channel_id_schedule
 
     def as_dict(self):
         return {
