@@ -25,8 +25,11 @@ async def has_owner_role(message):
                     .first()
                 )
                 session.expunge_all()
+         
         if server_data is not None:
+            # just turn server_data into dict
             sd = server_data.as_dict()
+
         if server_data is None:
             # No data about this server has been found
             await disc.send_message(message.channel, embed=embeds.Error("Error executing command", "This server is not setup."))
@@ -68,6 +71,16 @@ class AddScrim(Command):
     async def action(self, bot, message):
         if await has_owner_role(message):
             await bot.add_scrim(message)
+
+class UpdateSchedule(Command):
+    '''
+        Stops the bot from within, because CTRL+C sometimes takes too long
+    '''
+    activation_string = "!update"
+    help_string = "Manually updates schedule"
+
+    async def action(self, bot, message):
+        await bot.update_schedule(message)
 
 class StopCommand(Command):
     '''

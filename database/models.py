@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, BigInteger, Date
+from sqlalchemy import Column, Integer, String, BigInteger, Date, DateTime, Boolean
 from database.base import Base
 from datetime import datetime
 
@@ -6,19 +6,19 @@ from datetime import datetime
 class Servers(Base):
     __tablename__ = "servers"
 
-    discord_server_id = Column(BigInteger, primary_key=True, nullable=False, autoincrement=False)
+    discord_server_id = Column(String, primary_key=True, nullable=False, autoincrement=False)
     discord_server_name = Column(String, nullable=False)
     timezone = Column(String, nullable=False)
  
-    mention_role = Column(BigInteger, nullable=False)
-    owner_role = Column(BigInteger, nullable=False)
+    mention_role = Column(String, nullable=False)
+    owner_role = Column(String, nullable=False)
     
-    channel_id_schedule = Column(BigInteger, nullable=False)
-    channel_id_reminder = Column(BigInteger, nullable=False)
-    message_id_schedule = Column(BigInteger, nullable=True)
+    channel_id_schedule = Column(String, nullable=False)
+    channel_id_reminder = Column(String, nullable=False)
+    message_id_schedule = Column(String, nullable=False)
 
 
-    def __init__(self, discord_server_id, discord_server_name, timezone, owner_role, mention_role, channel_id_schedule, channel_id_reminder):        
+    def __init__(self, discord_server_id, discord_server_name, timezone, owner_role, mention_role, channel_id_schedule, channel_id_reminder, message_id_schedule):        
         self.discord_server_id = discord_server_id
         self.discord_server_name = discord_server_name
         self.timezone = timezone
@@ -26,6 +26,7 @@ class Servers(Base):
         self.mention_role = mention_role
         self.channel_id_reminder = channel_id_reminder
         self.channel_id_schedule = channel_id_schedule
+        self.message_id_schedule = message_id_schedule
 
     def as_dict(self):
         return {
@@ -37,4 +38,36 @@ class Servers(Base):
             "channel_id_schedule": self.channel_id_schedule,
             "channel_id_reminder": self.channel_id_reminder,
             "message_id_schedule": self.message_id_schedule
+        }
+
+class Scrims(Base):
+    __tablename__ = "scrims"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    discord_server_id = Column(String, nullable=False)
+    date = Column(Date, nullable=False)
+    time_start = Column(DateTime, nullable=False)
+    time_end = Column(DateTime, nullable=False)
+    enemy_team = Column(String, nullable=False)
+    notified = Column(Boolean)
+
+
+    def __init__(self, discord_server_id, date, time_start, time_end, enemy_team):        
+        self.discord_server_id = discord_server_id
+        self.date = date
+        self.time_start = time_start
+        self.time_end = time_end
+        self.enemy_team = enemy_team
+        self.notified = False
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "discord_server_id" : self.discord_server_id,
+            "date": self.date,
+            "time_start": self.time_start,
+            "time_end": self.time_end,
+            "enemy_team": self.enemy_team,
+            "notified": self.notified
         }

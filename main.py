@@ -13,6 +13,7 @@ bot = bot.Scrim_bot()
 
 bot.commands.append(commands.Setup())
 bot.commands.append(commands.AddScrim())
+bot.commands.append(commands.UpdateSchedule())
 
 if cfg.bot["version"] == "dev":
     bot.commands.append(commands.StopCommand())
