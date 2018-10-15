@@ -2,11 +2,6 @@ import requests
 import config as cfg
 
 def test_calendarkey(calendar_key):
-    '''
-        Tests calendar key by creating and deleting a sub-calendar
-        Command: !teamup [calendar-key]
-        vals    -   0           1
-    '''
     # tries to create and delete sub-calendar
     cal_data = create_sub_calendar("Scrim bot test", 24, calendar_key)
     if "subcalendar" in cal_data:
