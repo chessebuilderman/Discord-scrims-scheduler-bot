@@ -44,7 +44,7 @@ class Scrim_bot:
 
     async def add_scrim(self, message):
         '''
-           Command: !scrimsadd [dd/mm] [hh:mm] [hh:mm] [enemy-team-name]
+           Command: !scrimadd [dd/mm] [hh:mm] [hh:mm] [enemy-team-name]
               vals -    0         1       2       3            4
            Creates a new scrim entry, replies with embed containing information about added scrim
         '''
@@ -87,11 +87,113 @@ class Scrim_bot:
                 scrim = Scrims(message.server.id, scrim_date, utc_ts, utc_te, enemy_team_name)
                 session.add(scrim)
 
-                # TODO: Add this scrim to TeamUp database
+            # embed to inform user about successful add
+            embed = embeds.Success("Scrim added", "Scrim has been successfully added")
+            embed.add_field(name="Date", value=time_start_tz.strftime(fmt_date), inline=False)
+            embed.add_field(name="Timezone", value=time_end_tz.tzinfo, inline=True)
+            embed.add_field(name="Start of the scrim", value=time_start_tz.strftime(fmt), inline=True)
+            embed.add_field(name="End of the scrim", value=time_end_tz.strftime(fmt), inline=True)
+            embed.add_field(name="Opponent", value=enemy_team_name, inline=False)
+
+            # send embed as a response
+            await disc.send_message(message.channel, embed=embed)
+            # update schedule with current changes
+            await self.update_schedule(message)
+
+            # TODO: Add this scrim to TeamUp database
 
         else:
-            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, user `!scrimsadd help` for help"))          
+            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!scrimadd help` for help"))          
             return
+
+    async def delete_scrim(self, message):
+        '''
+            Deletes scrims by ID
+            Command: !scrimdelete [ID]
+            vals -      0           1
+        '''
+        vals = message.content.split(" ")
+        if len(vals) == 2:
+            with db.connect() as session:
+                res = session.query(Scrims).filter(Scrims.id == vals[1]).filter(Scrims.discord_server_id == message.server.id).delete()
+                session.expunge_all()
+            
+            if res == 1:
+                await disc.send_message(message.channel, embed=embeds.Success("Succesfully deleted scrim", "Scrim with ID %s has been deleted" % vals[1]))
+                # update schedule with current changes
+                await self.update_schedule(message)
+            else:
+                await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "No scrim has been deleted, either ID doesn't exist or this scrim doesn't belong to this server."))          
+        else:
+            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!scrimdelete help` for help"))
+
+    async def edit_scrim(self, message):
+        '''
+            Edits already existing scrim by ID
+            Command: !scrimedit [ID] [new dd/mm] [new hh:mm] [new hh:mm] [new enemy-team]
+            vals -      0         1     2           3             4             5
+        '''
+        vals = message.content.split(" ")
+        if len(vals) == 6:
+            # identical parsing to !scrimadd, just shifted arguments (cuz of ID)
+            with db.connect() as session:
+                query = (
+                    session.query(Servers)
+                    .filter_by(discord_server_id=message.server.id)
+                    .first()
+                )
+                session.expunge_all()
+
+            server_data = query.as_dict()
+            # parse date
+            dt_now = datetime.now()
+            date = vals[2].split("/")
+            # this format has to be mm/dd/yyyy
+            scrim_date = "{}/{}/{}".format(date[1], date[0], dt_now.year)
+                # TODO: Implement ability to add scrims for next year
+                # Just check for date being in the past, if it's in the past, it's happening next year
+            # datetime formatting
+            fmt = "%H:%M"
+            fmt_date = "%Y-%m-%d"
+            server_tz = timezone(server_data["timezone"]) 
+            utc_tz = timezone("UTC")
+            # ugly time formatting practice
+            ts = vals[3].split(":") # time-start
+            te = vals[4].split(":") # time-end
+            # localize this datetime to server's timezone
+            time_start_tz = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(ts[0]), int(ts[1]), 0))
+            time_end_tz   = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(te[0]), int(te[1]), 0))
+            # localize these datetimes to UTC for database storage
+            utc_ts = time_start_tz.astimezone(utc_tz)
+            utc_te = time_end_tz.astimezone(utc_tz)
+            # parse enemy-team-name
+            enemy_team_name = " ".join(str(x) for x in vals[5:])
+            
+            # update record in database
+            with db.connect() as session:
+                res = session.query(Scrims).filter(Scrims.discord_server_id == message.server.id).\
+                                            filter(Scrims.id == vals[1]).\
+                                            update({"date": scrim_date,
+                                                    "time_start": utc_ts,
+                                                    "time_end": utc_te,
+                                                    "enemy_team": enemy_team_name})
+                session.expunge_all()
+            
+            if res == 1:
+                # embed to inform user about successful add
+                embed = embeds.Success("Scrim edited", "Scrim has been successfully edited")
+                embed.add_field(name="Date", value=time_start_tz.strftime(fmt_date), inline=False)
+                embed.add_field(name="Timezone", value=time_end_tz.tzinfo, inline=True)
+                embed.add_field(name="Start of the scrim", value=time_start_tz.strftime(fmt), inline=True)
+                embed.add_field(name="End of the scrim", value=time_end_tz.strftime(fmt), inline=True)
+                embed.add_field(name="Opponent", value=enemy_team_name, inline=False)
+                await disc.send_message(message.channel, embed=embed)
+                # update schedule with current changes
+                await self.update_schedule(message)
+            else:
+                await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "No scrim has been edited, either ID doesn't exist or this scrim doesn't belong to this server."))          
+        else:
+            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!scrimedit help` for help"))
 
     async def update_schedule(self, message):
         today = datetime.today()
@@ -104,7 +206,7 @@ class Scrim_bot:
                     .first()
                 )
                 session.expunge_all()
-        print(query)
+        
         if query is not None:
             server_data = query.as_dict()
             schedule_embed = embeds.get_schedule_embed(today, week_from_today, server_data["discord_server_id"], server_data["timezone"])

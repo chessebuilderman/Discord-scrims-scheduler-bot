@@ -15,19 +15,19 @@ def add_embed_footer(embed):
 
 
 def Info(title, description):
-    embed = discord.Embed(title=title, description=description, color=0x007BFF)
+    embed = discord.Embed(title=":information_source: " + title, description=description, color=0x007BFF)
     add_embed_footer(embed)
     return embed
 
 
 def Success(title, description):
-    embed = discord.Embed(title=title, description=description, color=0x28A745)
+    embed = discord.Embed(title=":white_check_mark: " + title, description=description, color=0x28A745)
     add_embed_footer(embed)
     return embed
 
 
 def Error(title, description):
-    embed = discord.Embed(title=title, description=description, color=0xDC3545)
+    embed = discord.Embed(title=":x: " + title, description=description, color=0xDC3545)
     add_embed_footer(embed)
     return embed
 

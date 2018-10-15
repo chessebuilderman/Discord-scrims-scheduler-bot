@@ -65,12 +65,28 @@ class Setup(Command):
         await bot.setup(message)
 
 class AddScrim(Command):
-    activation_string = "!scrimsadd"
+    activation_string = "!scrimadd"
     help_string = "lipsum" # TODO
 
     async def action(self, bot, message):
         if await has_owner_role(message):
             await bot.add_scrim(message)
+
+class DeleteScrim(Command):
+    activation_string = "!scrimdelete"
+    help_string = "lipsum" # TODO
+
+    async def action(self, bot, message):
+        if await has_owner_role(message):
+            await bot.delete_scrim(message)
+            
+class EditScrim(Command):
+    activation_string = "!scrimedit"
+    help_string = "lipsum" # TODO
+
+    async def action(self, bot, message):
+        if await has_owner_role(message):
+            await bot.edit_scrim(message)
 
 class UpdateSchedule(Command):
     '''
