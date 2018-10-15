@@ -5,6 +5,7 @@ import embeds
 import config as cfg
 from database.db import Database
 from database.models import Servers
+import teamup
 
 disc = Discord_bot()
 client = disc.get_client()
@@ -97,6 +98,18 @@ class UpdateSchedule(Command):
 
     async def action(self, bot, message):
         await bot.update_schedule(message)
+
+class TeamupSetup(Command):
+    '''
+        Sets up TeamUP calendar key for working with this platform via their API
+    '''
+    activation_string = "!teamup"
+    help_string = "lipsum"
+
+    async def action(self, bot, message):
+        if await has_owner_role(message):
+            await bot.teamup_setup(message)
+                
 
 class StopCommand(Command):
     '''

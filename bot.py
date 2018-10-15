@@ -6,6 +6,7 @@ from pytz import timezone, all_timezones
 from database.models import Servers, Scrims
 from database.db import Database
 import embeds
+import teamup
 
 
 disc = Discord_bot()
@@ -49,7 +50,7 @@ class Scrim_bot:
            Creates a new scrim entry, replies with embed containing information about added scrim
         '''
         vals = message.content.split(" ")
-        if len(vals) == 5:
+        if len(vals) >= 5:
             with db.connect() as session:
                 query = (
                     session.query(Servers)
@@ -86,7 +87,11 @@ class Scrim_bot:
             with db.connect() as session:
                 scrim = Scrims(message.server.id, scrim_date, utc_ts, utc_te, enemy_team_name)
                 session.add(scrim)
+                session.flush()
+                session.expunge_all()
 
+            # get added data
+            scrim = scrim.as_dict()
             # embed to inform user about successful add
             embed = embeds.Success("Scrim added", "Scrim has been successfully added")
             embed.add_field(name="Date", value=time_start_tz.strftime(fmt_date), inline=False)
@@ -94,14 +99,27 @@ class Scrim_bot:
             embed.add_field(name="Start of the scrim", value=time_start_tz.strftime(fmt), inline=True)
             embed.add_field(name="End of the scrim", value=time_end_tz.strftime(fmt), inline=True)
             embed.add_field(name="Opponent", value=enemy_team_name, inline=False)
+            embed.add_field(name="Scrim ID", value=scrim["id"], inline=True) # TODO
 
             # send embed as a response
             await disc.send_message(message.channel, embed=embed)
             # update schedule with current changes
             await self.update_schedule(message)
 
-            # TODO: Add this scrim to TeamUp database
+            # Teamup add
+            if server_data["teamup_calendarkey"] is not None and server_data["teamup_subcalendar_id"] is not None:
+                iso_fmt = "%Y-%m-%dT%H:%M%SZ" #2015-01-31T10:00:00Z
+                tup_data = teamup.create_event(utc_ts.strftime(iso_fmt), utc_te.strftime(iso_fmt), "Scrim vs %s" % enemy_team_name, server_data["teamup_calendarkey"], server_data["teamup_subcalendar_id"])
+                if "error" in tup_data:
+                    await disc.send_message(message.channel, embed=embeds.Error("TeamUP Error", tup_data["error"]["message"]))    
+                else:
+                    with db.connect() as session:
+                        res = session.query(Scrims).filter(Scrims.id == scrim["id"]).\
+                                                    update({"teamup_id": tup_data["event"]["id"]})
+                        session.expunge_all()
 
+                    if res == 1:
+                        await disc.send_message(message.channel, embed=embeds.Success("Added to TeamUP", "Scrim has been successfuly added to TeamUP calendar"))
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!scrimadd help` for help"))          
             return
@@ -216,4 +234,29 @@ class Scrim_bot:
         else:
             return None
 
-          
+    #---------------------------------------------------------------------------------------
+    # TEAM UP STUFF
+    #--------------------------------------------------------------------------------------- 
+    async def teamup_setup(self, message):
+        '''
+            Tests calendar key by creating and deleting a sub-calendar
+            Command: !teamup [calendar-key]
+            vals    -   0           1
+        '''
+        vals = message.content.split(" ")
+        if len(vals) == 2:
+            # test calendar key
+            if teamup.test_calendarkey(vals[1]) is True:
+                data = teamup.create_sub_calendar("Scrim bot subcalendar", 18, vals[1])
+                # save this key to database
+                with db.connect() as session:
+                    res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
+                                                 update({"teamup_calendarkey": vals[1],
+                                                         "teamup_subcalendar_id": data["subcalendar"]["id"]})
+                    session.expunge_all()
+                
+                await disc.send_message(message.channel, embed=embeds.Success("TeamUP API connected", "New sub-calendar has been created on your TeamUP calendar"))
+
+        else:
+            await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!teamup help` for help"))
+         

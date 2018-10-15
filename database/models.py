@@ -17,6 +17,9 @@ class Servers(Base):
     channel_id_reminder = Column(String, nullable=False)
     message_id_schedule = Column(String, nullable=False)
 
+    teamup_calendarkey = Column(String, nullable=True)
+    teamup_subcalendar_id = Column(String, nullable=True)
+
 
     def __init__(self, discord_server_id, discord_server_name, timezone, owner_role, mention_role, channel_id_schedule, channel_id_reminder, message_id_schedule):        
         self.discord_server_id = discord_server_id
@@ -37,7 +40,9 @@ class Servers(Base):
             "owner_role": self.owner_role,
             "channel_id_schedule": self.channel_id_schedule,
             "channel_id_reminder": self.channel_id_reminder,
-            "message_id_schedule": self.message_id_schedule
+            "message_id_schedule": self.message_id_schedule,
+            "teamup_calendarkey": self.teamup_calendarkey,
+            "teamup_subcalendar_id": self.teamup_subcalendar_id
         }
 
 class Scrims(Base):
@@ -50,6 +55,8 @@ class Scrims(Base):
     time_start = Column(DateTime, nullable=False)
     time_end = Column(DateTime, nullable=False)
     enemy_team = Column(String, nullable=False)
+    teamup_id = Column(String, nullable=True)
+
     notified = Column(Boolean)
 
 
@@ -69,5 +76,6 @@ class Scrims(Base):
             "time_start": self.time_start,
             "time_end": self.time_end,
             "enemy_team": self.enemy_team,
+            "teamup_id": self.teamup_id,
             "notified": self.notified
         }

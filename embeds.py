@@ -71,7 +71,6 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
         if len(scrims_in_day) > 0:
             day_string = ""
             for scrim in scrims_in_day:
-                id, date, time_start_utc, time_end_utc, enemy_team, _, _ = scrim
                 utc_tz.localize(scrim["time_start"], is_dst=None)
                 utc_tz.localize(scrim["time_end"], is_dst=None)
 

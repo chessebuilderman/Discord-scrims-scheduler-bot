@@ -11,3 +11,4 @@ bot = {
     "prod_token": "login_token"
     }
 
+teamup_apikey = "" # team up api key from https://teamup.com/api-keys/request
