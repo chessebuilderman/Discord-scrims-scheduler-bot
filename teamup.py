@@ -23,7 +23,10 @@ def create_sub_calendar(name, color, calendar_key):
 	    "overlap": "true"
     }
     r = requests.post(url, headers=headers, json=payload)
-    return r.json()
+    if r.status_code == 201:
+        return r.json()
+    else:
+        return None
 
 def delete_sub_calendar(id, calendar_key):
     url = "https://api.teamup.com/%s/subcalendars/%s" % (calendar_key, id)

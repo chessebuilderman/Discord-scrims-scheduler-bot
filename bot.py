@@ -306,14 +306,16 @@ class Scrim_bot:
             if teamup.test_calendarkey(vals[1]) is True:
                 data = teamup.create_sub_calendar("Scrim bot subcalendar", 18, vals[1])
                 # save this key to database
-                with db.connect() as session:
-                    res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
-                                                 update({"teamup_calendarkey": vals[1],
-                                                         "teamup_subcalendar_id": data["subcalendar"]["id"]})
-                    session.expunge_all()
+                if data is not None:
+                    with db.connect() as session:
+                        res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
+                                                     update({"teamup_calendarkey": vals[1],
+                                                             "teamup_subcalendar_id": data["subcalendar"]["id"]})
+                        session.expunge_all()
                 
-                await disc.send_message(message.channel, embed=embeds.Success("TeamUP API connected", "New sub-calendar has been created on your TeamUP calendar"))
-
+                    await disc.send_message(message.channel, embed=embeds.Success("TeamUP API connected", "New sub-calendar has been created on your TeamUP calendar"))
+                else:
+                    await disc.send_message(message.channel, embed=embeds.Error("Something went wrong with TeamUP", "Request probably took too long, try again later..."))
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!teamup help` for help"))
          
