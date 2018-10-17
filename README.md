@@ -54,11 +54,18 @@ TeamUP API token can be obtained [here](https://teamup.com/api-keys/request)
 I'm not a big-boy Python programmer, so if you wish to refactor the code and teach me something, feel free to do so!
 
 ## Screenshots showcase
-> Adding a scrim
+>Adding a scrim
+
 ![Scrim-add](http://bot.patrikpapso.com/scrim-add.png)
-> Static schedule of the current week
+
+>Static schedule of the current week:
+
 ![Static-schedule](http://bot.patrikpapso.com/static-schedule.png)
-> Reminder about scrim ~15 minutes before scrim
-![Scrim-reminder](bot.patrikpapso.com/reminder.png)
-> TeamUP Calendar
+
+>Reminder about scrim ~15 minutes before scrim:
+
+![Scrim-reminder](http://bot.patrikpapso.com/reminder.png)
+
+>TeamUP Calendar:
+
 ![Teamup-calendar](http://bot.patrikpapso.com/teamup-calendar.png)
