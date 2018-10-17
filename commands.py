@@ -63,7 +63,7 @@ class Command:
 
 class Setup(Command):
     activation_string = "!setup"
-    help_string = "Sets up the server for bot to use:\n**Arguments**:\n`!setup [timezone] [owner-role] [mention-role] [schedule-channel] [reminders-channel]`\nMake sure that roles are **MENTIONABLE**" # TODO
+    help_string = "Sets up the server for bot to use:\n**Arguments**:\n`!setup [timezone] [owner-role] [mention-role] [schedule-channel] [reminders-channel]`\nMake sure that roles are **MENTIONABLE**\n**Available timezones can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)**" # TODO
     example = "`!setup Europe/Bratislava @manager @member #schedule #reminder`"
 
     async def action(self, bot, message):
