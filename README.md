@@ -1,4 +1,6 @@
 # Discord scrim bot
+> In case of any problems/bugs/need of friends, join the community discord [HERE](scheduler.patrikpapso.com)
+
 This project is a simple solution for teams to schedule their [scrims](https://www.urbandictionary.com/define.php?term=scrim) on Discord that includes Reminders (15 minutes before the scrim) and usage of [TeamUP](https://www.teamup.com/) API to use this service as a free Web Interface for cool looking calendar.
 
 **Screenshots are all the way at the bottom, so they don't take too much space**
