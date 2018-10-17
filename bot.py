@@ -43,7 +43,7 @@ class Scrim_bot:
                 await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "You need to provide 2 mentionable roles (owner + reminder)"))
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Unknown timezone, try to use this [LINK](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for reference."))
-
+   
     async def add_scrim(self, message):
         '''
            Command: !scrimadd [dd/mm] [hh:mm] [hh:mm] [enemy-team-name]
@@ -277,6 +277,14 @@ class Scrim_bot:
         '''
         vals = message.content.split(" ")
         if len(vals) == 2:
+            if vals[1] == "-":
+                 with db.connect() as session:
+                    res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
+                                                 update({"teamup_calendarkey": None,
+                                                         "teamup_subcalendar_id": None})
+                    session.expunge_all()
+                 if res == 1:
+                     await disc.send_message(message.channel, embed=embeds.Success("TeamUP API disconnected", "TeamUP has been succesfuly disconnected"))
             # test calendar key
             if teamup.test_calendarkey(vals[1]) is True:
                 data = teamup.create_sub_calendar("Scrim bot subcalendar", 18, vals[1])
