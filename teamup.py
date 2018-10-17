@@ -51,3 +51,35 @@ def create_event(start, end, title, calendar_key, subcalendar_id):
 
     r = requests.post(url, headers=headers, json=payload)
     return(r.json())
+
+def delete_event(calendar_key, event_id, event_version):
+    url = "https://api.teamup.com/%s/events/%s?version=%s&redit=all" % (calendar_key, event_id, event_version)
+    headers = {"Teamup-Token": cfg.teamup_apikey}
+
+    r = requests.delete(url, headers=headers)
+    return(r.status_code)
+
+def edit_event(calendar_key, subcalendar_id, event_id, event_version, new_start, new_end, new_title):
+    url = "https://api.teamup.com/%s/events/%s" % (calendar_key, event_id)
+    headers = {"Teamup-Token": cfg.teamup_apikey, 
+               "Content-type": "application/json"}
+
+    payload = {
+        "id": event_id,
+        "subcalendar_id": subcalendar_id,
+        "start_dt": new_start,
+        "end_dt": new_end,
+        "all_day": "false",
+        "rrule": "",
+        "title": new_title,
+        "who": "",
+        "location": "",
+        "notes": "",
+        "version": event_version,
+        "redit": "null",
+    }
+
+    print(payload)
+
+    r = requests.put(url, headers=headers, json=payload)
+    return(r.json())

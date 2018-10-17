@@ -31,11 +31,12 @@ class Scrim_bot:
                 # Check if 2 channels were mentioned 0 - schedule, 1 - reminders
                 channel_mentions = message.channel_mentions
                 if len(channel_mentions) == 2:
-                    message = await disc.send_message(channel_mentions[0], "kek")
+                    message = await disc.send_message(channel_mentions[0], "...")
                     # Save server data to server for future use
                     with db.connect() as session:
                         server = Servers(message.server.id, message.server.name, vals[1], role_mentions[0].id, role_mentions[1].id, channel_mentions[0].id, channel_mentions[1].id, message.id)
                         session.add(server)
+                    self.update_schedule(message)
                 else:
                     await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "You need to provide 2 channel (schedule + reminders)"))
             else:
@@ -94,12 +95,12 @@ class Scrim_bot:
             scrim = scrim.as_dict()
             # embed to inform user about successful add
             embed = embeds.Success("Scrim added", "Scrim has been successfully added")
+            embed.add_field(name="Scrim ID", value=scrim["id"], inline=True)
             embed.add_field(name="Date", value=time_start_tz.strftime(fmt_date), inline=False)
             embed.add_field(name="Timezone", value=time_end_tz.tzinfo, inline=True)
             embed.add_field(name="Start of the scrim", value=time_start_tz.strftime(fmt), inline=True)
             embed.add_field(name="End of the scrim", value=time_end_tz.strftime(fmt), inline=True)
             embed.add_field(name="Opponent", value=enemy_team_name, inline=False)
-            embed.add_field(name="Scrim ID", value=scrim["id"], inline=True) # TODO
 
             # send embed as a response
             await disc.send_message(message.channel, embed=embed)
@@ -115,7 +116,8 @@ class Scrim_bot:
                 else:
                     with db.connect() as session:
                         res = session.query(Scrims).filter(Scrims.id == scrim["id"]).\
-                                                    update({"teamup_id": tup_data["event"]["id"]})
+                                                    update({"teamup_event_id": tup_data["event"]["id"],
+                                                            "teamup_event_version": tup_data["event"]["version"]})
                         session.expunge_all()
 
                     if res == 1:
@@ -133,6 +135,8 @@ class Scrim_bot:
         vals = message.content.split(" ")
         if len(vals) == 2:
             with db.connect() as session:
+                server = session.query(Servers).filter_by(discord_server_id=message.server.id).first()
+                scrim = session.query(Scrims).filter(Scrims.id == vals[1]).first()
                 res = session.query(Scrims).filter(Scrims.id == vals[1]).filter(Scrims.discord_server_id == message.server.id).delete()
                 session.expunge_all()
             
@@ -140,6 +144,16 @@ class Scrim_bot:
                 await disc.send_message(message.channel, embed=embeds.Success("Succesfully deleted scrim", "Scrim with ID %s has been deleted" % vals[1]))
                 # update schedule with current changes
                 await self.update_schedule(message)
+
+                # if TeamUP is connected, delete from there as well
+                scrim = scrim.as_dict()
+                server = server.as_dict()
+                if server["teamup_calendarkey"] is not None:
+                    status_code = teamup.delete_event(server["teamup_calendarkey"], scrim["teamup_event_id"], scrim["teamup_event_version"])
+                    if status_code == 200:
+                        await disc.send_message(message.channel, embed=embeds.Success("Deleted from TeamUP", "Scrim has been successfuly deleted from TeamUP calendar"))
+                    else:
+                        await disc.send_message(message.channel, embed=embeds.Error("Error deleting from TeamUP", "Error occured while deleting from TeamUP calendar, event doesn't exist or it has be edited (delete manually)"))
             else:
                 await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "No scrim has been deleted, either ID doesn't exist or this scrim doesn't belong to this server."))          
         else:
@@ -152,14 +166,10 @@ class Scrim_bot:
             vals -      0         1     2           3             4             5
         '''
         vals = message.content.split(" ")
-        if len(vals) == 6:
+        if len(vals) > 6:
             # identical parsing to !scrimadd, just shifted arguments (cuz of ID)
             with db.connect() as session:
-                query = (
-                    session.query(Servers)
-                    .filter_by(discord_server_id=message.server.id)
-                    .first()
-                )
+                query = session.query(Servers).filter_by(discord_server_id=message.server.id).first()
                 session.expunge_all()
 
             server_data = query.as_dict()
@@ -189,6 +199,9 @@ class Scrim_bot:
             
             # update record in database
             with db.connect() as session:
+                server = session.query(Servers).filter_by(discord_server_id=message.server.id).first()
+                # I only need teamup_event_id and teamup_event_version, so it's fine querying it before edit
+                scrim = session.query(Scrims).filter(Scrims.id == vals[1]).first() 
                 res = session.query(Scrims).filter(Scrims.discord_server_id == message.server.id).\
                                             filter(Scrims.id == vals[1]).\
                                             update({"date": scrim_date,
@@ -198,7 +211,7 @@ class Scrim_bot:
                 session.expunge_all()
             
             if res == 1:
-                # embed to inform user about successful add
+                # embed to inform user about successful edit
                 embed = embeds.Success("Scrim edited", "Scrim has been successfully edited")
                 embed.add_field(name="Date", value=time_start_tz.strftime(fmt_date), inline=False)
                 embed.add_field(name="Timezone", value=time_end_tz.tzinfo, inline=True)
@@ -208,6 +221,29 @@ class Scrim_bot:
                 await disc.send_message(message.channel, embed=embed)
                 # update schedule with current changes
                 await self.update_schedule(message)
+
+                # If TeamUP is connected, edit there as well
+                scrim = scrim.as_dict()
+                server = server.as_dict()
+                if server["teamup_calendarkey"] is not None:
+                    iso_fmt = "%Y-%m-%dT%H:%M%SZ" #2015-01-31T10:00:00Z
+                    tup_data = teamup.edit_event(server["teamup_calendarkey"],
+                                                  server["teamup_subcalendar_id"],
+                                                  scrim["teamup_event_id"],
+                                                  scrim["teamup_event_version"],
+                                                  utc_ts.strftime(iso_fmt),
+                                                  utc_te.strftime(iso_fmt),
+                                                  "Scrim vs %s" % enemy_team_name)
+                    if "error" in tup_data:
+                        await disc.send_message(message.channel, embed=embeds.Error("TeamUP Error", tup_data["error"]["message"]))
+                    else:
+                        with db.connect() as session:
+                            res = session.query(Scrims).filter(Scrims.discord_server_id == message.server.id).\
+                                                        filter(Scrims.id == vals[1]).\
+                                                        update({"teamup_event_version": tup_data["event"]["version"]})
+                            session.expunge_all()
+                        if res == 1:
+                            await disc.send_message(message.channel, embed=embeds.Success("Edited in TeamUP", "Scrim has been successfuly edited in TeamUP calendar"))
             else:
                 await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "No scrim has been edited, either ID doesn't exist or this scrim doesn't belong to this server."))          
         else:
@@ -218,11 +254,7 @@ class Scrim_bot:
         week_from_today = today + timedelta(days=7)
 
         with db.connect() as session:
-                query = (
-                    session.query(Servers)
-                    .filter(Servers.discord_server_id == message.server.id)
-                    .first()
-                )
+                query = session.query(Servers).filter(Servers.discord_server_id == message.server.id).first()
                 session.expunge_all()
         
         if query is not None:
