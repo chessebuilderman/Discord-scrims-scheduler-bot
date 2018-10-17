@@ -1,13 +1,14 @@
 # Discord scrim bot
 This project is a simple solution for teams to schedule their [scrims](https://www.urbandictionary.com/define.php?term=scrim) on Discord that includes Reminders (15 minutes before the scrim) and usage of [TeamUP](https://www.teamup.com/) API to use this service as a free Web Interface for cool looking calendar.
 
+**Screenshots are all the way at the bottom, so they don't take too much space**
+
 I'm currently hosting this bot on my private VPS with Postgres database handling all the data. 
 
 If you wish to support the maintenance and caffeine costs -> 
 
-**Screenshots are all the way at the bottom, so they don't take too much space**
-
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/bluexow)
+
 ## How to use the bot
 1. Add the bot to your server via this [link](https://discordapp.com/api/oauth2/authorize?client_id=494030719715377152&permissions=0&scope=bot)
 2. Give the bot permissions to write/read channels you wish to use as schedule/reminders/commands etc.
