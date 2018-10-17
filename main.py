@@ -24,8 +24,8 @@ bot.commands.append(commands.EditScrim())
 bot.commands.append(commands.UpdateSchedule())
 bot.commands.append(commands.TeamupSetup())
 
-if cfg.bot["version"] == "dev":
-    bot.commands.append(commands.StopCommand())
+#if cfg.bot["version"] == "dev":
+#    bot.commands.append(commands.StopCommand())
 
 db = Database()
 
