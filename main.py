@@ -84,6 +84,9 @@ async def on_ready():
     print(client.user.id)
     print("------")
     client.loop.create_task(periodic())
+    # cool status when bot is online
+    game = discord.Game(name="DEVELOPMENT" if cfg.bot["version"] == "dev" else "scheduler.patrikpapso.com")
+    await client.change_presence(game=game)
 
 # on message go through registered commands
 @client.event
