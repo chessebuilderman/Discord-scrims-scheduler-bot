@@ -35,10 +35,14 @@ class Scrim_bot:
                     # Save server data to server for future use
                     with db.connect() as session:
                         res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).count()
-                        if res == 0:
+                        session.expunge_all()
+                    if res == 0:
+                        with db.connect() as session:
                             server = Servers(message.server.id, message.server.name, vals[1], role_mentions[0].id, role_mentions[1].id, channel_mentions[0].id, channel_mentions[1].id, msg.id)
                             session.add(server)
-                        else:
+                        print("new server - " + message.server.name)
+                    else:
+                        with db.connect() as session:
                             update_res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
                                                                 update({"owner_role": role_mentions[0].id,
                                                                         "mention_role": role_mentions[1].id,
@@ -46,7 +50,8 @@ class Scrim_bot:
                                                                         "channel_id_reminder": channel_mentions[1].id,
                                                                         "message_id_schedule": msg.id,
                                                                         "timezone": vals[1]})
-                        session.expunge_all()
+                        
+                            session.expunge_all()
                     await self.update_schedule(message)
                     await disc.send_message(message.channel, embed=embeds.Success("Server has been setup", "You have successfuly set up the server\nOwner: %s\nMention: %s\nSchedule: %s\nReminder: %s" % (role_mentions[0].name, role_mentions[1].name, channel_mentions[0].name, channel_mentions[1].name)))
                 else:
