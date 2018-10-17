@@ -5,8 +5,9 @@ I'm currently hosting this bot on my private VPS with Postgres database handling
 
 If you wish to support the maintenance and caffeine costs -> 
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/bluexow)
+**Screenshots are all the way at the bottom, so they don't take too much space**
 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/bluexow)
 ## How to use the bot
 1. Add the bot to your server via this [link](https://discordapp.com/api/oauth2/authorize?client_id=494030719715377152&permissions=0&scope=bot)
 2. Give the bot permissions to write/read channels you wish to use as schedule/reminders/commands etc.
@@ -48,3 +49,8 @@ Discord bot token can be obtained [here](https://discordapp.com/developers/appli
 TeamUP API token can be obtained [here](https://teamup.com/api-keys/request)
 
 I'm not a big-boy Python programmer, so if you wish to refactor the code and teach me something, feel free to do so!
+
+## Screenshots showcase
+![Scrim-add](http://bot.patrikpapso.com/scrim-add.png)
+![Static-schedule](http://bot.patrikpapso.com/static-schedule.png)
+![Scrim-add](http://bot.patrikpapso.com/teamup-calendar.png)
