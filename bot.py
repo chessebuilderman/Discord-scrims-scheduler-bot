@@ -34,10 +34,21 @@ class Scrim_bot:
                     msg = await disc.send_message(channel_mentions[0], "...")
                     # Save server data to server for future use
                     with db.connect() as session:
-                        server = Servers(message.server.id, message.server.name, vals[1], role_mentions[0].id, role_mentions[1].id, channel_mentions[0].id, channel_mentions[1].id, message.id)
-                        session.add(server)
-                    self.update_schedule(msg)
-                    await disc.send_message(message.channel, embed=embeds.Success("Server has been set up", "You have successfuly set up the server\nOwner: %s\nMention: %s\nSchedule: %s\nReminder: %s" % (role_mentions[0].name, role_mentions[1].name, channel_mentions[0].name, channel_mentions[1].name)))
+                        res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).count()
+                        if res == 0:
+                            server = Servers(message.server.id, message.server.name, vals[1], role_mentions[0].id, role_mentions[1].id, channel_mentions[0].id, channel_mentions[1].id, msg.id)
+                            session.add(server)
+                        else:
+                            update_res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
+                                                                update({"owner_role": role_mentions[0].id,
+                                                                        "mention_role": role_mentions[1].id,
+                                                                        "channel_id_schedule": channel_mentions[0].id,
+                                                                        "channel_id_reminder": channel_mentions[1].id,
+                                                                        "message_id_schedule": msg.id,
+                                                                        "timezone": vals[1]})
+                        session.expunge_all()
+                    await self.update_schedule(message)
+                    await disc.send_message(message.channel, embed=embeds.Success("Server has been setup", "You have successfuly set up the server\nOwner: %s\nMention: %s\nSchedule: %s\nReminder: %s" % (role_mentions[0].name, role_mentions[1].name, channel_mentions[0].name, channel_mentions[1].name)))
                 else:
                     await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "You need to provide 2 channel (schedule + reminders)"))
             else:
