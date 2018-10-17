@@ -55,7 +55,8 @@ class Scrims(Base):
     time_start = Column(DateTime, nullable=False)
     time_end = Column(DateTime, nullable=False)
     enemy_team = Column(String, nullable=False)
-    teamup_id = Column(String, nullable=True)
+    teamup_event_id = Column(String, nullable=True)
+    teamup_event_version = Column(String, nullable=True)
 
     notified = Column(Boolean)
 
@@ -76,6 +77,7 @@ class Scrims(Base):
             "time_start": self.time_start,
             "time_end": self.time_end,
             "enemy_team": self.enemy_team,
-            "teamup_id": self.teamup_id,
+            "teamup_event_id": self.teamup_event_id,
+            "teamup_event_version": self.teamup_event_version,
             "notified": self.notified
         }
