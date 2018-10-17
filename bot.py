@@ -314,8 +314,8 @@ class Scrim_bot:
                         session.expunge_all()
                 
                     await disc.send_message(message.channel, embed=embeds.Success("TeamUP API connected", "New sub-calendar has been created on your TeamUP calendar"))
-             else:
-                 await disc.send_message(message.channel, embed=embeds.Error("Something went wrong with TeamUP", "Calendarkey is invalid or request took too long, try again later..."))
+            else:
+                await disc.send_message(message.channel, embed=embeds.Error("Something went wrong with TeamUP", "Calendarkey is invalid or request took too long, try again later..."))
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!teamup help` for help"))
          
