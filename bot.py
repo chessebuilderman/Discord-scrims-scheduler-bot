@@ -37,6 +37,7 @@ class Scrim_bot:
                         server = Servers(message.server.id, message.server.name, vals[1], role_mentions[0].id, role_mentions[1].id, channel_mentions[0].id, channel_mentions[1].id, message.id)
                         session.add(server)
                     self.update_schedule(message)
+                    await disc.send_message(message.channel, embed=embeds.Success("Server has been set up", "You have successfuly set up the server\nOwner:%s\nMention:%s\nSchedule:%s\nReminder:%s" % (role_mentions[0].name, role_mentions[1].name, channel_mentions[0].name, channel_mentions[1].name)))
                 else:
                     await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "You need to provide 2 channel (schedule + reminders)"))
             else:
