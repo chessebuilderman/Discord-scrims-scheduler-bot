@@ -1,6 +1,6 @@
 import discord
 import asyncio
-
+from datetime import datetime
 
 class Discord_bot:
     _instance = None
@@ -27,8 +27,8 @@ class Discord_bot:
         '''
         try:
             return await self.client.send_message(channel, content=content, embed=embed)
-        except:
-            print("ERROR: cmonBruh (send_message)")
+        except Exception as e:
+            print("ERROR: cmonBruh (send_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
       
     async def get_message(self, channel, id):
         '''
@@ -37,8 +37,8 @@ class Discord_bot:
         msg = None
         try:
             msg = await self.client.get_message(channel, id)
-        except:
-            print("ERROR: SwiftStrike (get_message)")
+        except Exception as e:
+            print("ERROR: SwiftStrike (get_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return msg
 
     async def edit_message(self, message, new_content=None, embed=None):
@@ -48,6 +48,6 @@ class Discord_bot:
         msg = None
         try:
             msg = await self.client.edit_message(message, new_content=new_content, embed=embed)
-        except:
-            print("ERROR: :rage: (edit_message)")
+        except Exception as e:
+            print("ERROR: :rage: (edit_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return msg

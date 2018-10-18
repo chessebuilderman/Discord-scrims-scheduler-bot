@@ -37,39 +37,42 @@ class Scrim_bot:
                     schedule_channel_id = channel_mentions[0]
                     reminder_channel_id = channel_mentions[1]
                     msg = await disc.send_message(discord.Object(schedule_channel_id), "...")
-                    # Save server data to server for future use
-                    with db.connect() as session:
-                        res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).count()
-                        session.expunge_all()
-                    if res == 0:
+                    if msg is not None:
+                        # Save server data to server for future use
                         with db.connect() as session:
-                            server = Servers(message.server.id, message.server.name, vals[1], owner_role_id, reminder_role_id, schedule_channel_id, reminder_channel_id, msg.id)
-                            session.add(server)
-                        print("new server - " + message.server.name)
-                    else:
-                        with db.connect() as session:
-                            update_res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
-                                                                update({"owner_role": owner_role_id,
-                                                                        "mention_role": reminder_role_id,
-                                                                        "channel_id_schedule": schedule_channel_id,
-                                                                        "channel_id_reminder": reminder_channel_id,
-                                                                        "message_id_schedule": msg.id,
-                                                                        "timezone": vals[1]})
-                        
+                            res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).count()
                             session.expunge_all()
-                    await self.update_schedule(message)
-                    # get saved channel names
-                    schedule_channel_name = message.server.get_channel(schedule_channel_id)
-                    reminder_channel_name = message.server.get_channel(reminder_channel_id)
-                    # since discordpy doesnt give me role by id, I will pull out the role from message itself by id
-                    owner_role_name = ""
-                    reminder_role_name = ""
-                    for role in message.role_mentions:
-                        if role.id == owner_role_id:
-                            owner_role_name = role.name
-                        if role.id == reminder_role_id:
-                            reminder_role_name = role.name
-                    await disc.send_message(message.channel, embed=embeds.Success("Server has been setup", "You have successfuly set up the server\nOwner: %s\nMention: %s\nSchedule: %s\nReminder: %s" % (owner_role_name, reminder_role_name, schedule_channel_name, reminder_channel_name)))
+                        if res == 0:
+                            with db.connect() as session:
+                                server = Servers(message.server.id, message.server.name, vals[1], owner_role_id, reminder_role_id, schedule_channel_id, reminder_channel_id, msg.id)
+                                session.add(server)
+                            print("new server - " + message.server.name)
+                        else:
+                            with db.connect() as session:
+                                update_res = session.query(Servers).filter(Servers.discord_server_id == message.server.id).\
+                                                                    update({"owner_role": owner_role_id,
+                                                                            "mention_role": reminder_role_id,
+                                                                            "channel_id_schedule": schedule_channel_id,
+                                                                            "channel_id_reminder": reminder_channel_id,
+                                                                            "message_id_schedule": msg.id,
+                                                                            "timezone": vals[1]})
+                        
+                                session.expunge_all()
+                        await self.update_schedule(message)
+                        # get saved channel names
+                        schedule_channel_name = message.server.get_channel(schedule_channel_id)
+                        reminder_channel_name = message.server.get_channel(reminder_channel_id)
+                        # since discordpy doesnt give me role by id, I will pull out the role from message itself by id
+                        owner_role_name = ""
+                        reminder_role_name = ""
+                        for role in message.role_mentions:
+                            if role.id == owner_role_id:
+                                owner_role_name = role.name
+                            if role.id == reminder_role_id:
+                                reminder_role_name = role.name
+                        await disc.send_message(message.channel, embed=embeds.Success("Server has been setup", "You have successfuly set up the server\nOwner: %s\nMention: %s\nSchedule: %s\nReminder: %s" % (owner_role_name, reminder_role_name, schedule_channel_name, reminder_channel_name)))
+                    else:
+                        await disc.send_message(message.channel, embed=embeds.Error("Error sending a schedule message", "Make sure the bot has permissions to write into channel you specified for schedule."))
                 else:
                     await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "You need to provide 2 channel (schedule + reminders)"))
             else:
@@ -296,6 +299,8 @@ class Scrim_bot:
             msg = await disc.get_message(discord.Object(server_data["channel_id_schedule"]), server_data["message_id_schedule"])
             if msg is not None:
                 await disc.edit_message(msg, embed=schedule_embed)
+            else:
+                await disc.send_message(message.channel, embed=embeds.Error("Schedule message not found", "Schedule update unsuccessful, you probably deleted schedule message, setup server again to create a new one."))          
         else:
             return None
 
