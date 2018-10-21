@@ -202,7 +202,7 @@ class Scrim_bot:
             vals -      0         1     2           3             4             5
         '''
         vals = message.content.split(" ")
-        if len(vals) > 6:
+        if len(vals) >= 6:
             # identical parsing to !scrimadd, just shifted arguments (cuz of ID)
             with db.connect() as session:
                 query = session.query(Servers).filter_by(discord_server_id=message.server.id).first()
