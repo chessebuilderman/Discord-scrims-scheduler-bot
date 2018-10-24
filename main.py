@@ -94,15 +94,16 @@ async def periodicTeamUPSync():
                 with db.connect() as session:
                     res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
                                                  update({"teamup_lastcheck_timestamp": timestamp_now})
-            ts_diff = math.floor((timestamp_now - server_data["teamup_lastcheck_timestamp"])/60) # diff minutes
+            else:
+                ts_diff = math.floor((timestamp_now - server_data["teamup_lastcheck_timestamp"])/60) # diff minutes
             
-            # check if at least 15 minutes passed since last check
-            if ts_diff >= 2:
-                await bot.teamup_changed(server_data["discord_server_id"])
-                with db.connect() as session:
-                    res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
-                                                 update({"teamup_lastcheck_timestamp": timestamp_now})
-                await bot.update_schedule_by_server_id(server_data["discord_server_id"])
+                # check if at least 15 minutes passed since last check
+                if ts_diff >= 2:
+                    await bot.teamup_changed(server_data["discord_server_id"])
+                    with db.connect() as session:
+                        res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
+                                                     update({"teamup_lastcheck_timestamp": timestamp_now})
+                    await bot.update_schedule_by_server_id(server_data["discord_server_id"])
 
         await asyncio.sleep(30) # do every 5 minutes
 
