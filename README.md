@@ -32,6 +32,7 @@ pip install discord.py
 pip install pytz
 pip install psycopg2
 pip install SQLAlchemy
+pip install python-dateutil==2.6.0
 ```
 To run the bot yourself, you need to create `config.py` that includes:
 ```python

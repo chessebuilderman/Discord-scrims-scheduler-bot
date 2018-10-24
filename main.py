@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 from pytz import timezone
 import embeds
 import teamup
+import time
+import math
 
 disc = Discord_bot()
 client = disc.get_client()
@@ -30,7 +32,7 @@ bot.commands.append(commands.TeamupSetup())
 db = Database()
 
 # loop checking for reminders / updates
-async def periodic():
+async def periodicReminders():
     while True:
         utc_now = datetime.now(timezone("UTC"))
         utc_now_15min = utc_now + timedelta(minutes=15)
@@ -77,13 +79,36 @@ async def periodic():
 
         await asyncio.sleep(300)  # do every 5 minutes
 
+# loop checking for TeamUP sync timings
+async def periodicTeamUPSync():
+    while True:
+        with db.connect() as session:
+            servers = session.query(Servers).filter(Servers.teamup_calendarkey != None).all()
+            session.expunge_all()
+
+        for server in servers:
+            server_data = server.as_dict()
+            timestamp_now = math.floor(time.time())
+            # check if at least 15 minutes passed since last check
+            ts_diff = math.floor((timestamp_now - server_data["teamup_lastcheck_timestamp"])/60) # diff minutes
+            print("current diff: " + str(ts_diff))
+            if ts_diff >= 2:
+                await bot.teamup_changed(server_data["discord_server_id"])
+                with db.connect() as session:
+                    res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
+                                                 update({"teamup_lastcheck_timestamp": timestamp_now})
+                await bot.update_schedule_by_server_id(server_data["discord_server_id"])
+
+        await asyncio.sleep(30) # do every 5 minutes
+
 @client.event
 async def on_ready():
     print("Logged in as")
     print(client.user.name)
     print(client.user.id)
     print("------")
-    client.loop.create_task(periodic())
+    client.loop.create_task(periodicReminders())
+    client.loop.create_task(periodicTeamUPSync())
     # cool status when bot is online
     game = discord.Game(name="DEVELOPMENT" if cfg.bot["version"] == "dev" else "scheduler.patrikpapso.com")
     await client.change_presence(game=game)

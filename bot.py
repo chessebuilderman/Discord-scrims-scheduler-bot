@@ -2,6 +2,9 @@ import discord
 from singletons.disc import Discord_bot
 import random
 from datetime import datetime, timedelta
+import time
+import math
+import dateutil.parser
 from pytz import timezone, all_timezones
 from database.models import Servers, Scrims
 from database.db import Database
@@ -285,13 +288,16 @@ class Scrim_bot:
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!scrimedit help` for help"))
 
+    #
+    # TODO - in one function plzzzzzzzz
+    #
     async def update_schedule(self, message):
         today = datetime.today()
         week_from_today = today + timedelta(days=7)
 
         with db.connect() as session:
-                query = session.query(Servers).filter(Servers.discord_server_id == message.server.id).first()
-                session.expunge_all()
+            query = session.query(Servers).filter(Servers.discord_server_id == message.server.id).first()
+            session.expunge_all()
         
         if query is not None:
             server_data = query.as_dict()
@@ -301,8 +307,21 @@ class Scrim_bot:
                 await disc.edit_message(msg, embed=schedule_embed)
             else:
                 await disc.send_message(message.channel, embed=embeds.Error("Schedule message not found", "Schedule update unsuccessful, you probably deleted schedule message, setup server again to create a new one."))          
-        else:
-            return None
+
+    async def update_schedule_by_server_id(self, server_id):
+        today = datetime.today()
+        week_from_today = today + timedelta(days=7)
+
+        with db.connect() as session:
+            query = session.query(Servers).filter(Servers.discord_server_id == server_id).first()
+            session.expunge_all()
+        
+        if query is not None:
+            server_data = query.as_dict()
+            schedule_embed = embeds.get_schedule_embed(today, week_from_today, server_data["discord_server_id"], server_data["timezone"])
+            msg = await disc.get_message(discord.Object(server_data["channel_id_schedule"]), server_data["message_id_schedule"])
+            if msg is not None:
+                await disc.edit_message(msg, embed=schedule_embed)
 
     #---------------------------------------------------------------------------------------
     # TEAM UP STUFF
@@ -339,4 +358,83 @@ class Scrim_bot:
                 await disc.send_message(message.channel, embed=embeds.Error("Something went wrong with TeamUP", "Calendarkey is invalid or request took too long, try again later..."))
         else:
             await disc.send_message(message.channel, embed=embeds.Error("Wrong arguments", "Wrong argument provided, use `!teamup help` for help"))
-         
+    
+    async def teamup_changed(self, server_id):
+        '''
+            ---
+        '''
+        with db.connect() as session:
+            query = session.query(Servers).filter(Servers.discord_server_id == server_id).first()
+            session.expunge_all()
+
+        if query is not None:
+            server_data = query.as_dict()
+            
+            tudata = teamup.get_changed_events(server_data["teamup_calendarkey"], server_data["teamup_lastcheck_timestamp"])
+            
+            if "error" not in tudata:
+                changed_events = tudata["events"]
+                # if there are any changed events, get all events from database at once
+                if len(changed_events) > 0:
+                    with db.connect() as session:
+                        scrims_data = session.query(Scrims).filter(Scrims.discord_server_id == server_id).all()
+                        session.expunge_all()
+                    for event in changed_events:
+                        found = False
+                        for scrim in scrims_data:
+                            sd = scrim.as_dict()
+                            # only go through events that are in bot's subcalendar, ignore others
+                            if str(event["subcalendar_id"]) == server_data["teamup_subcalendar_id"]:
+                                # check if already existing event has been changed
+                                if sd["teamup_event_id"] == event["id"]:
+                                    found = True
+                                    if event["delete_dt"] is not None:
+                                        # Scrim has been deleted
+                                        with db.connect() as session:
+                                            res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
+                                                                        filter(Scrims.teamup_event_id == event["id"]).\
+                                                                        delete()
+                                    elif event["version"] != sd["teamup_event_version"]:
+                                        # Scrim has been edited
+                                        utc_tz = timezone("UTC")
+                                        fmt_date = "%Y-%m-%d"
+
+                                        start = dateutil.parser.parse(event["start_dt"])
+                                        end = dateutil.parser.parse(event["end_dt"])
+                                        # put time_start/time_end into utc timezone
+                                        utc_ts = start.astimezone(utc_tz)
+                                        utc_te = end.astimezone(utc_tz)
+                                        # pull date of the scrim from time_start
+                                        scrim_date = utc_ts.strftime(fmt_date)
+                                        # new event title
+                                        new_title = event["title"] if sd["enemy_team"] != event["title"] else sd["enemy_team"]
+                                        # change these fields in database
+                                        with db.connect() as session:
+                                            res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
+                                                                        filter(Scrims.teamup_event_id == event["id"]).\
+                                                                        update({"date": scrim_date,
+                                                                                "time_start": utc_ts,
+                                                                                "time_end": utc_te,
+                                                                                "enemy_team": new_title,
+                                                                                "teamup_event_version": event["version"]})
+                        # event not found in database, so add it
+                        if not found and event["delete_dt"] is None:
+                            # Scrim has been edited
+                            utc_tz = timezone("UTC")
+                            fmt_date = "%Y-%m-%d"
+
+                            start = dateutil.parser.parse(event["start_dt"])
+                            end = dateutil.parser.parse(event["end_dt"])
+                            # put time_start/time_end into utc timezone
+                            utc_ts = start.astimezone(utc_tz)
+                            utc_te = end.astimezone(utc_tz)
+                            # pull date of the scrim from time_start
+                            scrim_date = utc_ts.strftime(fmt_date)
+                            # enemy team name from event's title
+                            enemy_team_name = event["title"]
+                            # save the entry into database
+                            with db.connect() as session:
+                                scrim = Scrims(server_id, scrim_date, utc_ts, utc_te, enemy_team_name, event["id"], event["version"])
+                                session.add(scrim)
+                                session.flush()
+                                session.expunge_all()
