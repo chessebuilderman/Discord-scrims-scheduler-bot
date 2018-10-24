@@ -89,9 +89,14 @@ async def periodicTeamUPSync():
         for server in servers:
             server_data = server.as_dict()
             timestamp_now = math.floor(time.time())
-            # check if at least 15 minutes passed since last check
+            # if server doesnt have timestamp yet, add time_now
+            if server_data["teamup_lastcheck_timestamp"] == None:
+                with db.connect() as session:
+                    res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
+                                                 update({"teamup_lastcheck_timestamp": timestamp_now})
             ts_diff = math.floor((timestamp_now - server_data["teamup_lastcheck_timestamp"])/60) # diff minutes
-            print("current diff: " + str(ts_diff))
+            
+            # check if at least 15 minutes passed since last check
             if ts_diff >= 2:
                 await bot.teamup_changed(server_data["discord_server_id"])
                 with db.connect() as session:
