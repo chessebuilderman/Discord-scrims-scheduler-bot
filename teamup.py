@@ -86,3 +86,11 @@ def edit_event(calendar_key, subcalendar_id, event_id, event_version, new_start,
 
     r = requests.put(url, headers=headers, json=payload)
     return(r.json())
+
+def get_changed_events(calendar_key, timestamp=""):
+    url = "https://api.teamup.com/%s/events?modifiedSince=%s" % (calendar_key, timestamp)
+    headers = {"Teamup-Token": cfg.teamup_apikey, 
+               "Content-type": "application/json"}
+
+    r = requests.get(url, headers=headers)
+    return(r.json())

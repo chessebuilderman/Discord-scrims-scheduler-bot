@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, BigInteger, Date, DateTime, Boolean
 from database.base import Base
 from datetime import datetime
-
+import math
+import time
 
 class Servers(Base):
     __tablename__ = "servers"
@@ -19,6 +20,7 @@ class Servers(Base):
 
     teamup_calendarkey = Column(String, nullable=True)
     teamup_subcalendar_id = Column(String, nullable=True)
+    teamup_lastcheck_timestamp = Column(BigInteger, nullable=True)
 
 
     def __init__(self, discord_server_id, discord_server_name, timezone, owner_role, mention_role, channel_id_schedule, channel_id_reminder, message_id_schedule):        
@@ -30,6 +32,7 @@ class Servers(Base):
         self.channel_id_reminder = channel_id_reminder
         self.channel_id_schedule = channel_id_schedule
         self.message_id_schedule = message_id_schedule
+        self.teamup_lastcheck_timestamp = math.floor(time.time())
 
     def as_dict(self):
         return {
@@ -42,7 +45,8 @@ class Servers(Base):
             "channel_id_reminder": self.channel_id_reminder,
             "message_id_schedule": self.message_id_schedule,
             "teamup_calendarkey": self.teamup_calendarkey,
-            "teamup_subcalendar_id": self.teamup_subcalendar_id
+            "teamup_subcalendar_id": self.teamup_subcalendar_id,
+            "teamup_lastcheck_timestamp": self.teamup_lastcheck_timestamp 
         }
 
 class Scrims(Base):
@@ -61,13 +65,15 @@ class Scrims(Base):
     notified = Column(Boolean)
 
 
-    def __init__(self, discord_server_id, date, time_start, time_end, enemy_team):        
+    def __init__(self, discord_server_id, date, time_start, time_end, enemy_team, teamup_event_id=None, teamup_event_version=None):        
         self.discord_server_id = discord_server_id
         self.date = date
         self.time_start = time_start
         self.time_end = time_end
         self.enemy_team = enemy_team
         self.notified = False
+        self.teamup_event_id = teamup_event_id
+        self.teamup_event_version = teamup_event_version
 
     def as_dict(self):
         return {
