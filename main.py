@@ -98,7 +98,7 @@ async def periodicTeamUPSync():
                 ts_diff = math.floor((timestamp_now - server_data["teamup_lastcheck_timestamp"])/60) # diff minutes
             
                 # check if at least 15 minutes passed since last check
-                if ts_diff >= 2:
+                if ts_diff >= 0:
                     await bot.teamup_changed(server_data["discord_server_id"])
                     with db.connect() as session:
                         res = session.query(Servers).filter(Servers.discord_server_id == server_data["discord_server_id"]).\
@@ -133,4 +133,6 @@ async def on_message(message):
             await command.action(bot, message)
             return
 
+
+print(cfg)
 client.run( cfg.bot["prod_token"] if cfg.bot["version"] == "prod" else cfg.bot["dev_token"])

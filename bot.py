@@ -371,7 +371,6 @@ class Scrim_bot:
             server_data = query.as_dict()
             
             tudata = teamup.get_changed_events(server_data["teamup_calendarkey"], server_data["teamup_lastcheck_timestamp"])
-            
             if "error" not in tudata:
                 changed_events = tudata["events"]
                 # if there are any changed events, get all events from database at once
@@ -401,6 +400,11 @@ class Scrim_bot:
 
                                         start = dateutil.parser.parse(event["start_dt"])
                                         end = dateutil.parser.parse(event["end_dt"])
+                                        dt_times = end-start
+                                        print(dt_times)
+                                        if dt_times.days > 0:
+                                            end = start + timedelta(minutes=event["duration"])
+                                        print(end)
                                         # put time_start/time_end into utc timezone
                                         utc_ts = start.astimezone(utc_tz)
                                         utc_te = end.astimezone(utc_tz)
@@ -425,6 +429,9 @@ class Scrim_bot:
 
                             start = dateutil.parser.parse(event["start_dt"])
                             end = dateutil.parser.parse(event["end_dt"])
+                            dt_times = end-start
+                            if dt_times.days > 0:
+                                end = start + timedelta(minutes=event["duration"])
                             # put time_start/time_end into utc timezone
                             utc_ts = start.astimezone(utc_tz)
                             utc_te = end.astimezone(utc_tz)
