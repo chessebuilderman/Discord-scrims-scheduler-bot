@@ -386,7 +386,7 @@ class Scrim_bot:
                     scrims_event_ids = []
                     for scrim in scrims_query:
                         sd = scrim.as_dict()
-                        scrims_event_ids.append(sd["teamup_event_id"]) # save events in database, so we can check later newly added
+                        scrims_event_ids.append(sd["teamup_event_id"]) # save events from db, so we can check later newly added
                         found = False # later to check that it was deleted
                         for event in tudata["events"]: 
                             if event["id"] == sd["teamup_event_id"]:
