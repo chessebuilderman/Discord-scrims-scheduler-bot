@@ -94,3 +94,12 @@ def get_changed_events(calendar_key, timestamp=""):
 
     r = requests.get(url, headers=headers)
     return(r.json())
+
+def get_events_between_dates(calendar_key, startDate, endDate, subcalendar):
+    url = "https://api.teamup.com/%s/events?startDate=%s&endDate=%s&subcalendarId[]=%s" % (calendar_key, startDate, endDate, subcalendar)
+
+    headers = {"Teamup-Token": cfg.teamup_apikey, 
+               "Content-type": "application/json"}
+
+    r = requests.get(url, headers=headers)
+    return(r.json())

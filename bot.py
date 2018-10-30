@@ -369,69 +369,66 @@ class Scrim_bot:
 
         if query is not None:
             server_data = query.as_dict()
+            fmt_date = "%Y-%m-%d"
+            dt_now = datetime.now()
+            dt_now_m = dt_now - timedelta(days=1) # cuz between is weird and left bound is < and not <=
+            dt_week_later = dt_now + timedelta(days=7)
             
-            tudata = teamup.get_changed_events(server_data["teamup_calendarkey"], server_data["teamup_lastcheck_timestamp"])
+            tudata = teamup.get_events_between_dates(server_data["teamup_calendarkey"], dt_now.strftime(fmt_date), dt_week_later.strftime(fmt_date), server_data["teamup_subcalendar_id"])
             if "error" not in tudata:
-                changed_events = tudata["events"]
-                # if there are any changed events, get all events from database at once
-                if len(changed_events) > 0:
-                    with db.connect() as session:
-                        scrims_data = session.query(Scrims).filter(Scrims.discord_server_id == server_id).all()
-                        session.expunge_all()
-                    for event in changed_events:
-                        found = False
-                        for scrim in scrims_data:
-                            sd = scrim.as_dict()
-                            # only go through events that are in bot's subcalendar, ignore others
-                            if str(event["subcalendar_id"]) == server_data["teamup_subcalendar_id"]:
-                                # check if already existing event has been changed
-                                if sd["teamup_event_id"] == event["id"]:
-                                    found = True
-                                    if event["delete_dt"] is not None:
-                                        # Scrim has been deleted
-                                        with db.connect() as session:
-                                            res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
-                                                                        filter(Scrims.teamup_event_id == event["id"]).\
-                                                                        delete()
-                                    elif event["version"] != sd["teamup_event_version"]:
-                                        # Scrim has been edited
-                                        utc_tz = timezone("UTC")
-                                        fmt_date = "%Y-%m-%d"
+                # Get scrims for current week from database
+                with db.connect() as session:
+                    scrims_query = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
+                                                   filter(Scrims.date.between(dt_now_m, dt_week_later)).all()
+                    session.expunge_all()
 
-                                        start = dateutil.parser.parse(event["start_dt"])
-                                        end = dateutil.parser.parse(event["end_dt"])
-                                        dt_times = end-start
-                                        print(dt_times)
-                                        if dt_times.days > 0:
-                                            end = start + timedelta(minutes=event["duration"])
-                                        print(end)
-                                        # put time_start/time_end into utc timezone
-                                        utc_ts = start.astimezone(utc_tz)
-                                        utc_te = end.astimezone(utc_tz)
-                                        # pull date of the scrim from time_start
-                                        scrim_date = utc_ts.strftime(fmt_date)
-                                        # new event title
-                                        new_title = event["title"] if sd["enemy_team"] != event["title"] else sd["enemy_team"]
-                                        # change these fields in database
-                                        with db.connect() as session:
-                                            res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
-                                                                        filter(Scrims.teamup_event_id == event["id"]).\
-                                                                        update({"date": scrim_date,
-                                                                                "time_start": utc_ts,
-                                                                                "time_end": utc_te,
-                                                                                "enemy_team": new_title,
-                                                                                "teamup_event_version": event["version"]})
-                        # event not found in database, so add it
-                        if not found and event["delete_dt"] is None:
-                            # Scrim has been edited
+                if scrims_query is not None:
+                    scrims_event_ids = []
+                    for scrim in scrims_query:
+                        sd = scrim.as_dict()
+                        scrims_event_ids.append(sd["teamup_event_id"]) # save events in database, so we can check later newly added
+                        found = False # later to check that it was deleted
+                        for event in tudata["events"]: 
+                            if event["id"] == sd["teamup_event_id"]:
+                                found = True
+                                if event["version"] != sd["teamup_event_version"]:
+                                    # the event has been edited on teamup
+                                    utc_tz = timezone("UTC")
+                                    fmt_date = "%Y-%m-%d"
+                                    # date parsing
+                                    start = dateutil.parser.parse(event["start_dt"])
+                                    end = dateutil.parser.parse(event["end_dt"])
+                                    # put time_start/time_end into utc timezone
+                                    utc_ts = start.astimezone(utc_tz)
+                                    utc_te = end.astimezone(utc_tz)
+                                    # pull date of the scrim from time_start
+                                    scrim_date = utc_ts.strftime(fmt_date)
+                                    # enemy team name from event's title
+                                    new_title = event["title"]
+                                    # save the entry into database
+                                    with db.connect() as session:
+                                        res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
+                                                                    filter(Scrims.teamup_event_id == event["id"]).\
+                                                                    update({"date": scrim_date,
+                                                                            "time_start": utc_ts,
+                                                                            "time_end": utc_te,
+                                                                            "enemy_team": new_title,
+                                                                            "teamup_event_version": event["version"]})
+                        # check for deleted scrim
+                        if not found:
+                            # this scrim is not on teamup, delete it
+                            with db.connect() as session:
+                                res = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
+                                                            filter(Scrims.id == sd["id"]).\
+                                                            delete()
+                    # check for newly added scrims
+                    for event in tudata["events"]:
+                        if event["id"] not in scrims_event_ids:
                             utc_tz = timezone("UTC")
                             fmt_date = "%Y-%m-%d"
-
+                            # date parsing
                             start = dateutil.parser.parse(event["start_dt"])
                             end = dateutil.parser.parse(event["end_dt"])
-                            dt_times = end-start
-                            if dt_times.days > 0:
-                                end = start + timedelta(minutes=event["duration"])
                             # put time_start/time_end into utc timezone
                             utc_ts = start.astimezone(utc_tz)
                             utc_te = end.astimezone(utc_tz)
