@@ -342,6 +342,7 @@ class Scrim_bot:
                     session.expunge_all()
                  if res == 1:
                      await disc.send_message(message.channel, embed=embeds.Success("TeamUP API disconnected", "TeamUP has been succesfuly disconnected"))
+                     return
             # test calendar key
             data = teamup.create_sub_calendar("Scrim bot subcalendar", 18, vals[1])
             if data is not None:
