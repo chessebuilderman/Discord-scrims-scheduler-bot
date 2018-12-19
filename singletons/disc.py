@@ -28,7 +28,8 @@ class Discord_bot:
         try:
             return await self.client.send_message(channel, content=content, embed=embed)
         except Exception as e:
-            print("ERROR: cmonBruh (send_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            pass
+            #print("ERROR: cmonBruh (send_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
       
     async def get_message(self, channel, id):
         '''
@@ -38,7 +39,8 @@ class Discord_bot:
         try:
             msg = await self.client.get_message(channel, id)
         except Exception as e:
-            print("ERROR: SwiftStrike (get_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            pass
+            #print("ERROR: SwiftStrike (get_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return msg
 
     async def edit_message(self, message, new_content=None, embed=None):
@@ -49,5 +51,6 @@ class Discord_bot:
         try:
             msg = await self.client.edit_message(message, new_content=new_content, embed=embed)
         except Exception as e:
-            print("ERROR: :rage: (edit_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            pass
+            #print("ERROR: :rage: (edit_message) - "+ str(e) + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return msg

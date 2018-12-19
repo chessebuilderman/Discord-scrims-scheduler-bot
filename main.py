@@ -35,8 +35,7 @@ db = Database()
 async def periodicReminders():
     while True:
         utc_now = datetime.now(timezone("UTC"))
-        utc_now_15min = utc_now + timedelta(minutes=15
-                                            )
+        utc_now_15min = utc_now + timedelta(minutes=15)
         fmt_date = "%Y-%m-%d"
         fmt = "%H:%M"
         # get all scrims that are happening in ~15 minutes
