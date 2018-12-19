@@ -35,7 +35,8 @@ db = Database()
 async def periodicReminders():
     while True:
         utc_now = datetime.now(timezone("UTC"))
-        utc_now_15min = utc_now + timedelta(minutes=15)
+        utc_now_15min = utc_now + timedelta(minutes=15
+                                            )
         fmt_date = "%Y-%m-%d"
         fmt = "%H:%M"
         # get all scrims that are happening in ~15 minutes
@@ -48,9 +49,17 @@ async def periodicReminders():
             with db.connect() as session:
                 server = session.query(Servers).filter(Servers.discord_server_id == scrim["discord_server_id"]).first()
                 session.expunge_all()
-
             if server is not None:
                 sd = server.as_dict()
+                # check if bot is connected to this server
+                # quickfix for spamming errors
+                found = False
+                for ser in client.servers:
+                    if sd["discord_server_id"] == ser.id:
+                        found = True
+                if found is False:
+                    continue # skip this scrim since bot has been kicked from server
+
                 # timezones stuff
                 server_tz = timezone(sd["timezone"])
                 utc_tz = timezone("UTC")
