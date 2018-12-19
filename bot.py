@@ -104,9 +104,11 @@ class Scrim_bot:
             dt_now = datetime.now()
             date = vals[1].split("/")
             # this format has to be mm/dd/yyyy
-            scrim_date = "{}/{}/{}".format(date[1], date[0], dt_now.year)
-                # TODO: Implement ability to add scrims for next year
-                # Just check for date being in the past, if it's in the past, it's happening next year
+            scrim_year = dt_now.year
+            if len(date) == 3:
+                scrim_year = date[2]
+
+            scrim_date = "{}/{}/{}".format(date[1], date[0], scrim_year)
             # datetime formatting
             fmt = "%H:%M"
             fmt_date = "%Y-%m-%d"
@@ -116,8 +118,8 @@ class Scrim_bot:
             ts = vals[2].split(":") # time-start
             te = vals[3].split(":") # time-end
             # localize this datetime to server's timezone
-            time_start_tz = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(ts[0]), int(ts[1]), 0))
-            time_end_tz   = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(te[0]), int(te[1]), 0))
+            time_start_tz = server_tz.localize(datetime(int(scrim_year), int(date[1]), int(date[0]), int(ts[0]), int(ts[1]), 0))
+            time_end_tz   = server_tz.localize(datetime(int(scrim_year), int(date[1]), int(date[0]), int(te[0]), int(te[1]), 0))
             # localize these datetimes to UTC for database storage
             utc_ts = time_start_tz.astimezone(utc_tz)
             utc_te = time_end_tz.astimezone(utc_tz)
@@ -216,9 +218,11 @@ class Scrim_bot:
             dt_now = datetime.now()
             date = vals[2].split("/")
             # this format has to be mm/dd/yyyy
-            scrim_date = "{}/{}/{}".format(date[1], date[0], dt_now.year)
-                # TODO: Implement ability to add scrims for next year
-                # Just check for date being in the past, if it's in the past, it's happening next year
+            scrim_year = dt_now.year
+            if len(date) == 3:
+                scrim_year = date[2]
+
+            scrim_date = "{}/{}/{}".format(date[1], date[0], scrim_year)
             # datetime formatting
             fmt = "%H:%M"
             fmt_date = "%Y-%m-%d"
@@ -228,8 +232,8 @@ class Scrim_bot:
             ts = vals[3].split(":") # time-start
             te = vals[4].split(":") # time-end
             # localize this datetime to server's timezone
-            time_start_tz = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(ts[0]), int(ts[1]), 0))
-            time_end_tz   = server_tz.localize(datetime(dt_now.year, int(date[1]), int(date[0]), int(te[0]), int(te[1]), 0))
+            time_start_tz = server_tz.localize(datetime(int(scrim_year), int(date[1]), int(date[0]), int(ts[0]), int(ts[1]), 0))
+            time_end_tz   = server_tz.localize(datetime(int(scrim_year), int(date[1]), int(date[0]), int(te[0]), int(te[1]), 0))
             # localize these datetimes to UTC for database storage
             utc_ts = time_start_tz.astimezone(utc_tz)
             utc_te = time_end_tz.astimezone(utc_tz)
