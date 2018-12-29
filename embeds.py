@@ -57,7 +57,10 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
     for scrim in scrims_data:
         # put scrims into array by their day in the week (easier to turn into day-name)
         sd = scrim.as_dict()
-        index = (sd["date"].timetuple().tm_yday - 1) - (start_date.timetuple().tm_yday - 1)
+        if (sd["date"].timetuple().tm_yday -1) < (start_date.timetuple().tm_yday - 1):
+            index = sd["date"].timetuple().tm_yday - 1 + 365 - (start_date.timetuple().tm_yday - 1)
+        else:
+            index = (sd["date"].timetuple().tm_yday - 1) - (start_date.timetuple().tm_yday - 1)
         schedule[index].append(sd)
     
     # timezone formating stuff
