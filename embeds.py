@@ -41,7 +41,8 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
     # get all scrims from server between start_date and end_date
     with db.connect() as session:
         scrims_data = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
-                                            filter(Scrims.date.between(start_date_fmt, end_date_fmt)).all()
+                                            filter(Scrims.date.between(start_date_fmt, end_date_fmt)).\
+                                            order_by(Scrims.time_start).all()
         session.expunge_all()
     # create schedule embed 
     embed = discord.Embed(
