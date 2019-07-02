@@ -9,8 +9,8 @@ db = Database()
 
 def add_embed_footer(embed):
     embed.set_footer(
-        text="Scrims scheduler bot by BlueX | " + datetime.now().strftime("%a, %d %b %Y %H:%M:%S"),
-        icon_url="https://cdn.discordapp.com/avatars/162554458469957632/c84e8dc5798eb16113f915c4443b15ab.png",
+        text="Scrims scheduler bot by BlueX | VPS time: " + datetime.now().strftime("%a, %d %b %Y %H:%M:%S"),
+        icon_url="http://patrikpapso.com/images/avatar-128x128.png",
     )
 
 
@@ -36,8 +36,23 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 def get_schedule_embed(start_date, end_date, server_id, server_timezone):
     
     fmt_date = "%Y-%m-%d"
-    start_date_fmt = start_date.strftime(fmt_date)
-    end_date_fmt = end_date.strftime(fmt_date)
+    # server timezone
+    server_tz = timezone(server_timezone)
+
+    #print("No timezone given")
+    #print(start_date)
+    #print("Server timezone")
+    #print(start_date.astimezone(server_tz))
+
+    
+    start_date_fmt = start_date.astimezone(server_tz).strftime(fmt_date)
+    end_date_fmt = end_date.astimezone(server_tz).strftime(fmt_date)
+
+    start_date = start_date.astimezone(server_tz)
+    end_date = end_date.astimezone(server_tz)
+
+    datetime_now_tz = datetime.now().astimezone(server_tz)
+
     # get all scrims from server between start_date and end_date
     with db.connect() as session:
         scrims_data = session.query(Scrims).filter(Scrims.discord_server_id == server_id).\
@@ -49,7 +64,7 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
         title="SCRIMS SCHEDULE {} - {}".format(start_date_fmt, end_date_fmt),
         color=0x007BFF,
     )
-    embed.set_thumbnail(url="http://icons-for-free.com/free-icons/png/512/497220.png")
+    embed.set_thumbnail(url="http://patrikpapso.com/images/schedule.png")
     add_embed_footer(embed)
     
     delta = end_date - start_date
@@ -65,7 +80,6 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
         schedule[index].append(sd)
     
     # timezone formating stuff
-    server_tz = timezone(server_timezone)
     utc_tz = timezone("UTC")
     fmt_date_scrim = "%d.%m.%Y"
     fmt = "%H:%M"
@@ -80,7 +94,7 @@ def get_schedule_embed(start_date, end_date, server_id, server_timezone):
 
                 time_start_server = scrim["time_start"].astimezone(server_tz)
                 time_end_server = scrim["time_end"].astimezone(server_tz)
-                if datetime.today().date() > scrim["date"]:
+                if datetime_now_tz.date() > scrim["date"]:
                     day_string += "~~({}) {} - {} against {}~~\n".format(
                         id,
                         time_start_server.strftime(fmt),

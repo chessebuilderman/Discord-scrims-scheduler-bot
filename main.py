@@ -69,7 +69,7 @@ async def periodicReminders():
                 time_end_server = scrim["time_end"].astimezone(server_tz)
                 # Embed to inform people assembling
                 embed = embeds.Info("Scrim happening", "There is a scrim happening in less than 15 minutes")
-                embed.set_thumbnail(url="http://bot.patrikpapso.com/swords.png")
+                embed.set_thumbnail(url="http://patrikpapso.com/images/swords.png")
                 embeds.add_embed_footer(embed)
                 embed.add_field(name="Date", value=time_start_server.strftime(fmt_date), inline=False)
                 embed.add_field(name="Start of the scrim",value=time_start_server.strftime(fmt),inline=True)
